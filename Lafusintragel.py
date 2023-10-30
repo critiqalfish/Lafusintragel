@@ -16,8 +16,10 @@ class Lafusintragel:
         pygame.display.set_caption("Lafusintragel")
         self.running = True
         self.screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE)
-        self.custom_font = pygame.font.Font("Hack-Regular.ttf", 36)
-        self.icon_image = pygame.image.load("Lafusintragel256x.png")
+        self.interface_font = pygame.font.Font("data/Hack-Regular.ttf", 36)
+        self.web_font = pygame.font.Font("data/NotoSerif-Regular.ttf", 16)
+        self.icon_image = pygame.image.load("data/Lafusintragel256x.png")
+        
         pygame.display.set_icon(self.icon_image)
         window = pygame._sdl2.Window.from_display_module()
         window.maximize()
@@ -50,14 +52,14 @@ class Lafusintragel:
         pygame.draw.rect(self.screen, RED, (0, 44, self.screen_width, 3))
         pygame.draw.rect(self.screen, GREEN, (0, 47, self.screen_width, 3))
         pygame.draw.rect(self.screen, BLUE, (0, 50, self.screen_width, 3))
-        url_surface = self.custom_font.render(self.url, True, WHITE)
+        url_surface = self.interface_font.render(self.url, True, WHITE)
         self.screen.blit(url_surface, (10, 0))
 
         pygame.draw.rect(self.screen, BLACK, (0, self.screen_height - 44, self.screen_width, 44))
         pygame.draw.rect(self.screen, RED, (0, self.screen_height - 47, self.screen_width, 3))
         pygame.draw.rect(self.screen, GREEN, (0, self.screen_height - 50, self.screen_width, 3))
         pygame.draw.rect(self.screen, BLUE, (0, self.screen_height - 53, self.screen_width, 3))
-        message_surface = self.custom_font.render(self.message, True, WHITE)
+        message_surface = self.interface_font.render(self.message, True, WHITE)
         self.screen.blit(message_surface, (10, self.screen_height - 43))
 
         self.content_surface.fill(WHITE)
@@ -66,9 +68,8 @@ class Lafusintragel:
         elif self.content_type == "text":
             lines = self.content.split('\n')
             for line, y in zip(lines, range(len(lines))):
-                content_line_surface = self.custom_font.render(line, True, BLACK)
-                self.content_surface.blit(content_line_surface, (0, y * 36))
-
+                content_line_surface = self.web_font.render(line, True, BLACK)
+                self.content_surface.blit(content_line_surface, (0, y * 16))
         self.screen.blit(self.content_surface, (self.usable[0], self.usable[1]))
 
         pygame.display.flip()
@@ -96,19 +97,21 @@ class Lafusintragel:
         self.content_type = ""
         self.message = ""
         if self.url.startswith("file://"):
-            url = self.url[7:]
+            fpath = self.url[7:]
             try:
-                with open(url, "r") as f:
+                with open(fpath, "r") as f:
                     self.content = f.read()
-                    if f.name.endswith(".html"):
+                    if self.content.lower().startswith("<!doctype html>"):
+                        self.content = self.content[15:]
+                        print(self.content)
                         self.content_type = "html"
                     else:
                         self.content_type = "text"
-                        self.message = f"Warning: \"{url}\" rendered as text"
+                        self.message = f"Warning: \"{fpath}\" rendered as text"
             except FileNotFoundError as e:
-                self.message = f"Error: the file \"{url}\" was not found"
+                self.message = f"Error: the file \"{fpath}\" was not found"
             except IOError as e:
-                self.message = f"Error: could not open the file \"{url}\""
+                self.message = f"Error: could not open the file \"{fpath}\""
             except Exception as e:
                 self.message = str(e)
         elif self.url.startswith("http://"):
@@ -119,6 +122,15 @@ class Lafusintragel:
         else:
             self.message = "Error: no valid url scheme"
 
+class LMTHParser:
+    def __init__(self, source):
+        self.source = source
+        self.loc = 0
+        self.lmth = {}
+    
+    def parse(self):
+        while self.loc < len(self.source):
+            # here
 
 if __name__ == "__main__":
     yeah = Lafusintragel()
